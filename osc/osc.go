@@ -56,6 +56,7 @@ type Client struct {
 	ip    string
 	port  int
 	laddr *net.UDPAddr
+	conn  *net.UDPConn
 }
 
 // Server represents an OSC server. The server listens on Address and Port for
@@ -472,8 +473,17 @@ func (b *Bundle) MarshalBinary() ([]byte, error) {
 // messages and OSC bundles over an UDP network connection. The `ip` argument
 // specifies the IP address and `port` defines the target port where the
 // messages and bundles will be send to.
-func NewClient(ip string, port int) *Client {
-	return &Client{ip: ip, port: port, laddr: nil}
+func NewClient(ip string, port int) (*Client, error) {
+	var laddr *net.UDPAddr
+	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", ip, port))
+	if err != nil {
+		return nil, err
+	}
+	conn, err := net.DialUDP("udp", laddr, addr)
+	if err != nil {
+		return nil, err
+	}
+	return &Client{ip: ip, port: port, laddr: laddr, conn: conn}, nil
 }
 
 // IP returns the IP address.
@@ -500,25 +510,21 @@ func (c *Client) SetLocalAddr(ip string, port int) error {
 
 // Send sends an OSC Bundle or an OSC Message.
 func (c *Client) Send(packet Packet) error {
-	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", c.ip, c.port))
-	if err != nil {
-		return err
-	}
-	conn, err := net.DialUDP("udp", c.laddr, addr)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
 
 	data, err := packet.MarshalBinary()
 	if err != nil {
 		return err
 	}
 
-	if _, err = conn.Write(data); err != nil {
+	if _, err = c.conn.Write(data); err != nil {
 		return err
 	}
 	return nil
+}
+
+// Destroy client - closes connection
+func (c *Client) Destroy() error {
+	return c.conn.Close()
 }
 
 ////
