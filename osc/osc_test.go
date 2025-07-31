@@ -200,7 +200,11 @@ func testServerMessageDispatching(t *testing.T, stringArgument string) {
 		case <-timeout:
 		case <-start:
 			time.Sleep(500 * time.Millisecond)
-			client := NewClient("localhost", port)
+			client, err := NewClient("localhost", port)
+			if err != nil {
+				t.Error(err)
+				return
+			}
 			msg := NewMessage("/address/test")
 			msg.Append(int32(1122))
 			msg.Append(stringArgument)
@@ -303,7 +307,11 @@ func testServerMessageReceiving(t *testing.T, stringArgument string) {
 		select {
 		case <-timeout:
 		case <-start:
-			client := NewClient("localhost", port)
+			client, err := NewClient("localhost", port)
+			if err != nil {
+				t.Error(err)
+				return
+			}
 			msg := NewMessage("/address/test")
 			msg.Append(int32(1122))
 			msg.Append(int32(3344))
@@ -368,9 +376,13 @@ func TestReadTimeout(t *testing.T) {
 			t.Error("timed out")
 			wg.Done()
 		case <-start:
-			client := NewClient("localhost", 6677)
+			client, err := NewClient("localhost", 6677)
+			if err != nil {
+				t.Error(err)
+				return
+			}
 			msg := NewMessage("/address/test1")
-			err := client.Send(msg)
+			err = client.Send(msg)
 			if err != nil {
 				t.Error(err)
 			}
@@ -588,8 +600,12 @@ func TestTypeTagsString(t *testing.T) {
 }
 
 func TestClientSetLocalAddr(t *testing.T) {
-	client := NewClient("localhost", 8967)
-	err := client.SetLocalAddr("localhost", 41789)
+	client, err := NewClient("localhost", 8967)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = client.SetLocalAddr("localhost", 41789)
 	if err != nil {
 		t.Error(err.Error())
 	}
