@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/samsta/go-osc/osc"
+	"github.com/hypebeast/go-osc/osc"
 )
 
 func indent(str string, indentLevel int) string {

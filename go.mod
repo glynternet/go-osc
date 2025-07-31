@@ -1,3 +1,3 @@
-module github.com/samsta/go-osc
+module github.com/hypebeast/go-osc
 
 go 1.16
